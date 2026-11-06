@@ -23,7 +23,7 @@ import sys
 import uuid
 
 from hermes_cli.gateway_client import GatewayClientError
-from hermes_cli.gateway_connection import GatewayConnection
+from hermes_cli.gateway_connection import RESUME_REFUSALS, GatewayConnection
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ _GATEWAY_OWNED = frozenset({
     "maybe_auto_prune_and_vacuum", "set_meta", "update_token_counts", "close",
 })
 # Mutations the owner refuses without the execution generation they were read at (hermes_state_runtime).
-_GENERATION_FENCED = frozenset({"delete", "rewind", "reset", "branch", "model", "compress"})
+_GENERATION_FENCED = frozenset({"delete", "rewind", "reset", "branch", "model", "compress", "workspace"})
 _COUNTED_REPAIRS = frozenset({"prune_empty_ghost_sessions", "finalize_orphaned_compression_sessions"})
 # Launch options main's ``cli.main`` takes that are creation policy on the gateway session.
 _LAUNCH_POLICY = ("model", "provider", "toolsets", "reasoning", "api_key", "base_url", "max_turns",
@@ -73,6 +73,12 @@ class GatewaySessionStore:
 
     def __bool__(self):
         return not self.connection.final
+
+    def close_reader(self):
+        """Release this viewer's SQLite handles before offline maintenance; keep its RPC store."""
+        if self._reader is not None:
+            self._reader.close()
+            self._reader = None
 
     # -- reads -----------------------------------------------------------------------------
     def _db(self):
@@ -142,7 +148,7 @@ class GatewaySessionStore:
             try:
                 snapshot = self.attach(cli.session_id, typed=self.connection.launch_api_key_typed)
             except GatewayClientError as exc:
-                if str(exc) in {"not_found", "permission_denied"}:
+                if str(exc) in RESUME_REFUSALS:
                     return None
                 raise
             # The CLI sends a coding-posture toolset pick and an env-folded ignore_rules too; only a typed
@@ -156,11 +162,11 @@ class GatewaySessionStore:
         """``session.create`` with the launch policy (and ``title``: the owner's resolve -> create ->
         title step); adopts and returns the new session id. ``record_cwd=False`` (``/new``,
         ``--create-if-missing``) leaves the row's cwd empty, as main's explicit creates did."""
-        from agent.session_source import CLI_FAMILY_SOURCES, session_source_for
+        from agent.session_source import CLI_FAMILY_SOURCES, create_surface, session_source_for
         params = _creation_policy(launch or {})
-        params["cwd"] = os.path.realpath(os.getenv("TERMINAL_CWD") or os.getcwd())
+        params["cwd"] = _launch_cwd()
         # Main's row label: ``cli``, ``oneshot`` for a finite -q/-Q run, or an explicit --source.
-        params["source"] = session_source_for("cli")
+        params["source"] = create_surface(session_source_for("cli"))
         # Main's row stamp (run_agent._launch_cwd_for_session): this process's cwd (``-w`` never
         # chdirs, so the repo root), only for a CLI-family label on a local terminal backend.
         local = (os.getenv("TERMINAL_ENV") or "local").strip().lower() in ("", "local")
@@ -378,7 +384,6 @@ class GatewaySessionStore:
             "cwd": info.get("cwd"),
             # Main's startup lines under the banner, computed in the gateway (``source: cli`` only).
             "tool_availability_warnings": info.get("tool_availability_warnings"),
-            "browser_backend_notice": info.get("browser_backend_notice"),
         }
 
 
@@ -481,6 +486,23 @@ def _creation_policy(launch):
     return policy
 
 
+def _launch_cwd():
+    """``session.create``'s ``cwd``, a host folder the owner checks on its own host. TERMINAL_CWD is the
+    folder this CLI has selected (``-w``, ``/worktree new`` and ``/resume`` all move it). A local backend
+    sends it as is, as on main. A docker/ssh one sends it when it is a host directory or the recorded
+    ``-w`` tree (a vanished tree is then refused as on main, not swapped for the checkout); otherwise
+    it is a path inside the sandbox, so the launch dir is sent and the backend keeps its own cwd
+    (``terminal_uses_host_cwd``). A tree no longer selected (a later /resume moved away) never decides.
+    ``hermes -w`` records the tree in the imported ``cli`` module, ``python cli.py -w`` in ``__main__``."""
+    terminal_cwd = os.getenv("TERMINAL_CWD")
+    trees = (getattr(sys.modules.get(name), "_active_worktree", None) for name in ("cli", "__main__"))
+    recorded = {os.path.realpath(tree["path"]) for tree in trees if tree and tree.get("path")}
+    if terminal_cwd and os.path.realpath(terminal_cwd) in recorded:
+        return os.path.realpath(terminal_cwd)
+    local = (os.getenv("TERMINAL_ENV") or "local").strip().lower() in ("", "local")
+    return os.path.realpath(terminal_cwd if terminal_cwd and (local or os.path.isdir(terminal_cwd)) else os.getcwd())
+
+
 def _classic_only_policy(launch):
     """Main's `--run-budget` and `-v`, which the thin client refuses."""
     policy = {}
@@ -509,6 +531,23 @@ def _check_resume_launch(launch, snapshot):
         raise resume_policy_error(differs)
 
 
+def move_cli_workspace(cli, wt_info):
+    """``/worktree new``: the session's tools run in the gateway under the cwd frozen in its policy, so
+    move that first (``session.mutate workspace``, Desktop's Move to project; a refusal raises before
+    anything moved). The moved session resumes in the tree, so it is recorded as a ``--tui -w`` tree is:
+    quit removes it when clean and a resume recreates it (N8). Then this process's cwd and TERMINAL_CWD
+    follow, so a later /new creates its session from the tree; a chdir OSError leaves both where they
+    were (the gateway session has moved by then)."""
+    from hermes_cli.gateway_automation import gateway_connection
+    cwd = wt_info["path"]
+    if gateway_connection(cli) is not None:
+        cli._session_db._mutate(cli.session_id, "workspace", {"cwd": cwd})
+        from hermes_cli.tui_worktree_resume import record_tui_worktree
+        record_tui_worktree(wt_info)
+    os.chdir(cwd)
+    os.environ["TERMINAL_CWD"] = cwd
+
+
 def session_store():
     return GatewaySessionStore()
 
@@ -520,7 +559,7 @@ def create_titled_session(title):
     (``row_cwd`` ""). Returns the id, or None when the gateway refused (the caller prints main's
     "could not be created" copy)."""
     params = _creation_policy({})
-    params["cwd"] = os.path.realpath(os.getenv("TERMINAL_CWD") or os.getcwd())
+    params["cwd"] = _launch_cwd()
     params["source"] = "cli"  # main's titled row is `cli` (hermes_cli.main._create_titled_session)
     params["row_cwd"] = ""
     try:
