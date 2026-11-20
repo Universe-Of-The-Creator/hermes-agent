@@ -680,43 +680,43 @@
     "python": {
       "artifacts": {
         "darwin-arm64": {
-          "sha256": "226d696642a8a53d03b4d5b255b1c319b1575a6d44bd723a953c9f507755e36a",
-          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261021/cpython-3.14.9+20261021-aarch64-apple-darwin-install_only.tar.gz"
+          "sha256": "42031ed5f0d38777335252c8c77d64708c8010dd67c128246bdec25000672666",
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.14.10+20261110-aarch64-apple-darwin-install_only.tar.gz"
         },
         "darwin-x64": {
-          "sha256": "600cf336dd007e7c72318214fd0708a56c555b516964175df4a748e4ff0487a2",
-          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261021/cpython-3.14.9+20261021-x86_64-apple-darwin-install_only.tar.gz"
+          "sha256": "f6c82fcf867b4aaadd373ac97699ad95fbb9c96f9ecf9b25775943aa5458b87f",
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.14.10+20261110-x86_64-apple-darwin-install_only.tar.gz"
         },
         "linux-arm64": {
-          "sha256": "847895ba727440b012207bb0192282d7e182eb991ae5c7bb5c35c6a12a99e732",
-          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261021/cpython-3.14.9+20261021-aarch64-unknown-linux-gnu-install_only.tar.gz"
+          "sha256": "e59f83159984a55e719bb3805a0b2b5b281f645769222218084b78b92eedc07f",
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.14.10+20261110-aarch64-unknown-linux-gnu-install_only.tar.gz"
         },
         "linux-arm64-bionic": {
-          "sha256": "3166e56c2b6c03fff41191fbb9d736302978e7c484702814d9f6dc99dd6006bd",
-          "url": "https://packages.termux.dev/apt/termux-main/pool/main/p/python/python_3.14.6-1_aarch64.deb"
+          "sha256": "1a5a300c8d844f2c18a3bb61cafbffb2e93fba9a7106ebe967f06c9628d1e434",
+          "url": "https://packages.termux.dev/apt/termux-main/pool/main/p/python/python_3.14.10_aarch64.deb"
         },
         "linux-arm64-musl": {
-          "sha256": "ef171f00a80763ea5e3f547686217a1baf24cdb13905204ef8e647bfef511715",
-          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261021/cpython-3.14.9+20261021-aarch64-unknown-linux-musl-install_only.tar.gz"
+          "sha256": "04059957a8a5d4fb858f26191cc6d193428de6f914ebfbe0591aee0bd29ff13f",
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.14.10+20261110-aarch64-unknown-linux-musl-install_only.tar.gz"
         },
         "linux-x64": {
-          "sha256": "dfa4c5a40c47f338f41658017be550c72247c391e6bfb1fa4da03ebc8451abdf",
-          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261021/cpython-3.14.9+20261021-x86_64-unknown-linux-gnu-install_only.tar.gz"
+          "sha256": "3fe0d7c0538eb5d190c34582992d26230532551355cbd789fabc6591621cfc07",
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.14.10+20261110-x86_64-unknown-linux-gnu-install_only.tar.gz"
         },
         "linux-x64-musl": {
-          "sha256": "ab192510e5ed7f219757063aedaa6f3aa73f2bfe0e8ab015eeb36bb3273fc6b0",
-          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261021/cpython-3.14.9+20261021-x86_64-unknown-linux-musl-install_only.tar.gz"
+          "sha256": "f62b3abda3feae720ace6a9180ef4ea761a62e60917247d6b622cf69caab239d",
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.14.10+20261110-x86_64-unknown-linux-musl-install_only.tar.gz"
         },
         "win32-arm64": {
-          "sha256": "b7af5a4655fcf919f00ef9426f9737637de73062bf9953cc0c13e50e516f282a",
-          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261021/cpython-3.14.9+20261021-aarch64-pc-windows-msvc-install_only.tar.gz"
+          "sha256": "d1a855c3debb8c66e2ad684373f807d35ce9a2b5abf9241a846a8054d8ff2bdf",
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.14.10+20261110-aarch64-pc-windows-msvc-install_only.tar.gz"
         },
         "win32-x64": {
-          "sha256": "60739023ce2d9dee1dfde665c73bc61735cd8ecc5e0277345f1dc0ba6c0fc9ba",
-          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261021/cpython-3.14.9+20261021-x86_64-pc-windows-msvc-install_only.tar.gz"
+          "sha256": "b9bee0a6f590914a495a8305701951e543b4475bb620d11661b49052b990456b",
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.14.10+20261110-x86_64-pc-windows-msvc-install_only.tar.gz"
         }
       },
-      "version": "3.14.9+20261021"
+      "version": "3.14.10+20261110"
     },
     "ripgrep": {
       "artifacts": {
